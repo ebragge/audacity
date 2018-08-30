@@ -77,6 +77,11 @@ bool ExportCommand::Apply(const CommandContext & context)
    }
    wxString extension = mFileName.Mid(splitAt+1).MakeUpper();
 
+   if (extension == wxT("TXT"))
+   {
+	   return ExportLabels(context, mFileName);
+   }
+
    Exporter exporter;
 
    bool exportSuccess = exporter.Process(context.GetProject(),
@@ -93,5 +98,62 @@ bool ExportCommand::Apply(const CommandContext & context)
 
    context.Error(wxString::Format(wxT("Could not export to %s format!"), extension));
    return false;
+}
+
+bool ExportCommand::ExportLabels(const CommandContext & context, wxString fName)
+{
+	Track *t;
+	int numLabelTracks = 0;
+
+	TrackListIterator iter(context.GetProject()->GetTracks());
+
+	t = iter.First();
+	while (t) {
+		if (t->GetKind() == Track::Label)
+		{
+			numLabelTracks++;
+		}
+		t = iter.Next();
+	}
+
+	if (numLabelTracks == 0) {
+		return false;
+	}
+
+	// Move existing files out of the way.  Otherwise wxTextFile will
+	// append to (rather than replace) the current file.
+
+	if (wxFileExists(fName)) {
+#ifdef __WXGTK__
+		wxString safetyFileName = fName + wxT("~");
+#else
+		wxString safetyFileName = fName + wxT(".bak");
+#endif
+
+		if (wxFileExists(safetyFileName))
+			wxRemoveFile(safetyFileName);
+
+		wxRename(fName, safetyFileName);
+	}
+
+	wxTextFile f(fName);
+	f.Create();
+	f.Open();
+	if (!f.IsOpened()) {
+		return false;
+	}
+
+	t = iter.First();
+	while (t) {
+		if (t->GetKind() == Track::Label)
+			((LabelTrack *)t)->Export(f);
+
+		t = iter.Next();
+	}
+
+	f.Write();
+	f.Close();
+
+	return true;
 }
 
