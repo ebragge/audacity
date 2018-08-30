@@ -1388,8 +1388,8 @@ bool NyquistEffect::ProcessOne()
 
    if (rval == nyx_string) {
       wxString msg = NyquistToWxString(nyx_get_string());
-      if (!msg.IsEmpty())  // Not currently a documented feature, but could be useful as a No-Op.
-         Effect::MessageBox(msg);
+      //if (!msg.IsEmpty())  // Not currently a documented feature, but could be useful as a No-Op.
+      //   Effect::MessageBox(msg);
 
       // True if not process type.
       // If not returning audio from process effect,
